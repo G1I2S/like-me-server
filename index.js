@@ -57,6 +57,57 @@ app.post("/posts", async (req, res) => {
   }
 });
 
+// ------------------------------------------------------------------
+// Requerimiento 1 (Parte II): Ruta PUT para sumar un like a un post.
+// El cliente la llama cada vez que el usuario hace click en el corazón.
+// ------------------------------------------------------------------
+app.put("/posts/:id/like", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const resultado = await pool.query(
+      `UPDATE posts
+       SET likes = likes + 1
+       WHERE id = $1
+       RETURNING *`,
+      [id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: "Post no encontrado" });
+    }
+
+    res.json(resultado.rows[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al dar like al post" });
+  }
+});
+
+// ------------------------------------------------------------------
+// Requerimiento 2 (Parte II): Ruta DELETE para eliminar un post.
+// El cliente la llama al hacer click en la "X" de un post.
+// ------------------------------------------------------------------
+app.delete("/posts/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const resultado = await pool.query(
+      "DELETE FROM posts WHERE id = $1 RETURNING *",
+      [id]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({ error: "Post no encontrado" });
+    }
+
+    res.json({ mensaje: "Post eliminado", post: resultado.rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al eliminar el post" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Servidor Like Me escuchando en http://localhost:${PORT}`);
 });
